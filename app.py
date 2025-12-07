@@ -33,7 +33,6 @@ def _on_hex_change():
 	st.session_state.b = b
 
 
-# Initialize state
 if "initialized" not in st.session_state:
 	st.session_state.r = 255
 	st.session_state.g = 0
@@ -51,12 +50,10 @@ if "initialized" not in st.session_state:
 	st.session_state.clip_warning = False
 	st.session_state.initialized = True
 
-# Ensure XYZ values are within slider bounds
 st.session_state.X = min(max(float(st.session_state.get("X", 0.0)), 0.0), 95.047)
 st.session_state.Y = min(max(float(st.session_state.get("Y", 0.0)), 0.0), 100.0)
 st.session_state.Z = min(max(float(st.session_state.get("Z", 0.0)), 0.0), 108.883)
 
-# Compute synchronized values based on last changed model
 clip_warning = False
 source = st.session_state.get("source_model", "rgb")
 if source == "rgb":
@@ -102,7 +99,6 @@ else:  # xyz
 st.title("Цветовые модели: RGB ↔ XYZ ↔ HSV")
 st.caption("Интерактивная синхронизация трёх моделей. XYZ (D65): X≤95.047, Y≤100, Z≤108.883. HSV — H:0–360°, S/V:0–100%.")
 
-# Color picker
 st.color_picker("Палитра (sRGB)", key="hex", on_change=_on_hex_change)
 
 col1, col2, col3 = st.columns(3)
