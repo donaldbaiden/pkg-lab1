@@ -27,14 +27,12 @@ def _clamp(value: float, min_value: float, max_value: float) -> float:
 
 
 def _srgb_to_linear(c: float) -> float:
-	# c in [0,1]
 	if c <= 0.04045:
 		return c / 12.92
 	return ((c + 0.055) / 1.055) ** 2.4
 
 
 def _linear_to_srgb(c: float) -> float:
-	# c in [0,1]
 	if c <= 0.0031308:
 		return 12.92 * c
 	return 1.055 * (c ** (1.0 / 2.4)) - 0.055
