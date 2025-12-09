@@ -82,7 +82,6 @@ def xyz100_to_rgb255(X: float, Y: float, Z: float) -> Tuple[Tuple[int, int, int]
 
 
 def rgb255_to_hsv_deg(r: int, g: int, b: int) -> Tuple[float, float, float]:
-	"""Преобразует 8-битный sRGB в HSV, где H в градусах [0..360), S и V в процентах [0..100]."""
 	r_s = _clamp(r, 0, 255) / 255.0
 	g_s = _clamp(g, 0, 255) / 255.0
 	b_s = _clamp(b, 0, 255) / 255.0
@@ -91,7 +90,6 @@ def rgb255_to_hsv_deg(r: int, g: int, b: int) -> Tuple[float, float, float]:
 
 
 def hsv_deg_to_rgb255(h_deg: float, s_perc: float, v_perc: float) -> Tuple[int, int, int]:
-	"""Преобразует HSV (градусы/проценты) в 8-битный sRGB."""
 	h = (h_deg % 360.0) / 360.0
 	s = _clamp(s_perc, 0.0, 100.0) / 100.0
 	v = _clamp(v_perc, 0.0, 100.0) / 100.0
@@ -103,14 +101,12 @@ def hsv_deg_to_rgb255(h_deg: float, s_perc: float, v_perc: float) -> Tuple[int, 
 
 
 def xyz100_to_hsv_deg(X: float, Y: float, Z: float) -> Tuple[Tuple[float, float, float], bool]:
-	"""XYZ (0..100) -> HSV (градусы, проценты) через sRGB. Возвращает (hsv, флаг_обрезки_значения)."""
 	(rgb, clipped) = xyz100_to_rgb255(X, Y, Z)
 	h, s, v = rgb255_to_hsv_deg(*rgb)
 	return (h, s, v), clipped
 
 
 def hsv_deg_to_xyz100(h_deg: float, s_perc: float, v_perc: float) -> Tuple[float, float, float]:
-	"""HSV (градусы, проценты) -> XYZ (0..100) через sRGB."""
 	r, g, b = hsv_deg_to_rgb255(h_deg, s_perc, v_perc)
 	return rgb255_to_xyz100(r, g, b)
 
