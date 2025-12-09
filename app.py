@@ -33,6 +33,44 @@ def _on_hex_change():
 	st.session_state.b = b
 
 
+def _number_input_callback_factory(target_key, after_change):
+	number_key = f"{target_key}_number"
+
+	def _callback():
+		st.session_state[target_key] = st.session_state[number_key]
+		if after_change:
+			after_change()
+
+	return _callback
+
+
+def _slider_with_number(label, min_value, max_value, key, on_change, step=None, number_format=None):
+	is_float = isinstance(min_value, float) or isinstance(max_value, float)
+	step_value = step if step is not None else (0.001 if is_float else 1)
+	format_value = number_format if number_format else ("%.3f" if is_float else None)
+	number_key = f"{key}_number"
+	if key in st.session_state:
+		st.session_state[number_key] = st.session_state.get(number_key, st.session_state[key])
+		st.session_state[number_key] = st.session_state[key]
+	else:
+		st.session_state[key] = min_value
+		st.session_state[number_key] = min_value
+	slider_col, input_col = st.columns([4, 1])
+	with slider_col:
+		st.slider(label, min_value, max_value, key=key, on_change=on_change)
+	with input_col:
+		st.number_input(
+			label,
+			min_value=min_value,
+			max_value=max_value,
+			step=step_value,
+			key=number_key,
+			format=format_value,
+			label_visibility="collapsed",
+			on_change=_number_input_callback_factory(key, on_change),
+		)
+
+
 if "initialized" not in st.session_state:
 	st.session_state.r = 255
 	st.session_state.g = 0
@@ -105,21 +143,21 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
 	st.subheader("RGB")
-	st.slider("R", 0, 255, key="r", on_change=_set_source_rgb)
-	st.slider("G", 0, 255, key="g", on_change=_set_source_rgb)
-	st.slider("B", 0, 255, key="b", on_change=_set_source_rgb)
+	_slider_with_number("R", 0, 255, key="r", on_change=_set_source_rgb)
+	_slider_with_number("G", 0, 255, key="g", on_change=_set_source_rgb)
+	_slider_with_number("B", 0, 255, key="b", on_change=_set_source_rgb)
 
 with col2:
 	st.subheader("HSV")
-	st.slider("H (°)", 0, 360, key="h", on_change=_set_source_hsv)
-	st.slider("S (%)", 0, 100, key="s", on_change=_set_source_hsv)
-	st.slider("V (%)", 0, 100, key="v", on_change=_set_source_hsv)
+	_slider_with_number("H (°)", 0, 360, key="h", on_change=_set_source_hsv)
+	_slider_with_number("S (%)", 0, 100, key="s", on_change=_set_source_hsv)
+	_slider_with_number("V (%)", 0, 100, key="v", on_change=_set_source_hsv)
 
 with col3:
 	st.subheader("XYZ (D65)")
-	st.slider("X", 0.0, 95.047, key="X", on_change=_set_source_xyz)
-	st.slider("Y", 0.0, 100.0, key="Y", on_change=_set_source_xyz)
-	st.slider("Z", 0.0, 108.883, key="Z", on_change=_set_source_xyz)
+	_slider_with_number("X", 0.0, 95.047, key="X", on_change=_set_source_xyz, step=0.001)
+	_slider_with_number("Y", 0.0, 100.0, key="Y", on_change=_set_source_xyz, step=0.001)
+	_slider_with_number("Z", 0.0, 108.883, key="Z", on_change=_set_source_xyz, step=0.001)
 
 # Preview large swatch
 st.markdown("---")
