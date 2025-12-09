@@ -45,6 +45,20 @@ def _dot3(m: Tuple[Tuple[float, float, float], ...], v: Tuple[float, float, floa
 	return (a, b, c)
 
 
+def _xyz100_to_srgb(X: float, Y: float, Z: float) -> Tuple[Tuple[float, float, float], bool]:
+	Xn = X / 100.0
+	Yn = Y / 100.0
+	Zn = Z / 100.0
+	r_lin, g_lin, b_lin = _dot3(_XYZ_TO_SRGB, (Xn, Yn, Zn))
+	clipped = False
+	if not (0.0 <= r_lin <= 1.0) or not (0.0 <= g_lin <= 1.0) or not (0.0 <= b_lin <= 1.0):
+		clipped = True
+	r_srgb = _linear_to_srgb(_clamp(r_lin, 0.0, 1.0))
+	g_srgb = _linear_to_srgb(_clamp(g_lin, 0.0, 1.0))
+	b_srgb = _linear_to_srgb(_clamp(b_lin, 0.0, 1.0))
+	return (r_srgb, g_srgb, b_srgb), clipped
+
+
 def rgb255_to_xyz100(r: int, g: int, b: int) -> Tuple[float, float, float]:
 	"""Преобразует 8-битный sRGB в CIE XYZ, масштабированный к диапазону 0..100 (D65)."""
 	r = _clamp(r, 0, 255)
@@ -62,16 +76,8 @@ def rgb255_to_xyz100(r: int, g: int, b: int) -> Tuple[float, float, float]:
 
 def xyz100_to_rgb255(X: float, Y: float, Z: float) -> Tuple[Tuple[int, int, int], bool]:
 	"""Преобразует XYZ (0..100, D65) в 8-битный sRGB. Возвращает (rgb, флаг_обрезки_значения)."""
-	Xn = X / 100.0
-	Yn = Y / 100.0
-	Zn = Z / 100.0
-	r_lin, g_lin, b_lin = _dot3(_XYZ_TO_SRGB, (Xn, Yn, Zn))
-	clipped = False
-	if not (0.0 <= r_lin <= 1.0) or not (0.0 <= g_lin <= 1.0) or not (0.0 <= b_lin <= 1.0):
-		clipped = True
-	r_srgb = _linear_to_srgb(_clamp(r_lin, 0.0, 1.0))
-	g_srgb = _linear_to_srgb(_clamp(g_lin, 0.0, 1.0))
-	b_srgb = _linear_to_srgb(_clamp(b_lin, 0.0, 1.0))
+	(srgb, clipped) = _xyz100_to_srgb(X, Y, Z)
+	r_srgb, g_srgb, b_srgb = srgb
 	r8 = int(round(_clamp(r_srgb, 0.0, 1.0) * 255.0))
 	g8 = int(round(_clamp(g_srgb, 0.0, 1.0) * 255.0))
 	b8 = int(round(_clamp(b_srgb, 0.0, 1.0) * 255.0))
@@ -101,9 +107,10 @@ def hsv_deg_to_rgb255(h_deg: float, s_perc: float, v_perc: float) -> Tuple[int, 
 
 
 def xyz100_to_hsv_deg(X: float, Y: float, Z: float) -> Tuple[Tuple[float, float, float], bool]:
-	(rgb, clipped) = xyz100_to_rgb255(X, Y, Z)
-	h, s, v = rgb255_to_hsv_deg(*rgb)
-	return (h, s, v), clipped
+	(srgb, clipped) = _xyz100_to_srgb(X, Y, Z)
+	r_s, g_s, b_s = srgb
+	h, s, v = colorsys.rgb_to_hsv(r_s, g_s, b_s)
+	return (h * 360.0, s * 100.0, v * 100.0), clipped
 
 
 def hsv_deg_to_xyz100(h_deg: float, s_perc: float, v_perc: float) -> Tuple[float, float, float]:

@@ -71,6 +71,11 @@ def _slider_with_number(label, min_value, max_value, key, on_change, step=None, 
 		)
 
 
+def _clamp_round(value: float, min_value: float, max_value: float) -> float:
+	clamped = min(max(float(value), min_value), max_value)
+	return round(clamped, 3)
+
+
 if "initialized" not in st.session_state:
 	st.session_state.r = 255
 	st.session_state.g = 0
@@ -80,17 +85,17 @@ if "initialized" not in st.session_state:
 	st.session_state.h = int(round(h))
 	st.session_state.s = int(round(s))
 	st.session_state.v = int(round(v))
-	st.session_state.X = min(float(X), 95.047)
-	st.session_state.Y = min(float(Y), 100.0)
-	st.session_state.Z = min(float(Z), 108.883)
+	st.session_state.X = _clamp_round(X, 0.0, 95.047)
+	st.session_state.Y = _clamp_round(Y, 0.0, 100.0)
+	st.session_state.Z = _clamp_round(Z, 0.0, 108.883)
 	st.session_state.hex = rgb_to_hex(255, 0, 0)
 	st.session_state.source_model = "rgb"
 	st.session_state.clip_warning = False
 	st.session_state.initialized = True
 
-st.session_state.X = min(max(float(st.session_state.get("X", 0.0)), 0.0), 95.047)
-st.session_state.Y = min(max(float(st.session_state.get("Y", 0.0)), 0.0), 100.0)
-st.session_state.Z = min(max(float(st.session_state.get("Z", 0.0)), 0.0), 108.883)
+st.session_state.X = _clamp_round(st.session_state.get("X", 0.0), 0.0, 95.047)
+st.session_state.Y = _clamp_round(st.session_state.get("Y", 0.0), 0.0, 100.0)
+st.session_state.Z = _clamp_round(st.session_state.get("Z", 0.0), 0.0, 108.883)
 
 clip_warning = False
 source = st.session_state.get("source_model", "rgb")
@@ -101,9 +106,9 @@ if source == "rgb":
 	st.session_state.h = int(round(h))
 	st.session_state.s = int(round(s))
 	st.session_state.v = int(round(v))
-	st.session_state.X = min(float(X), 95.047)
-	st.session_state.Y = min(float(Y), 100.0)
-	st.session_state.Z = min(float(Z), 108.883)
+	st.session_state.X = _clamp_round(X, 0.0, 95.047)
+	st.session_state.Y = _clamp_round(Y, 0.0, 100.0)
+	st.session_state.Z = _clamp_round(Z, 0.0, 108.883)
 	st.session_state.hex = rgb_to_hex(r, g, b)
 elif source == "hsv":
 	h = float(st.session_state.h)
@@ -114,9 +119,9 @@ elif source == "hsv":
 	st.session_state.r = int(r)
 	st.session_state.g = int(g)
 	st.session_state.b = int(b)
-	st.session_state.X = min(float(X), 95.047)
-	st.session_state.Y = min(float(Y), 100.0)
-	st.session_state.Z = min(float(Z), 108.883)
+	st.session_state.X = _clamp_round(X, 0.0, 95.047)
+	st.session_state.Y = _clamp_round(Y, 0.0, 100.0)
+	st.session_state.Z = _clamp_round(Z, 0.0, 108.883)
 	st.session_state.hex = rgb_to_hex(r, g, b)
 else:  # xyz
 	X = float(st.session_state.X)
@@ -124,7 +129,8 @@ else:  # xyz
 	Z = float(st.session_state.Z)
 	(rgb, clipped) = xyz100_to_rgb255(X, Y, Z)
 	r, g, b = rgb
-	h, s, v = rgb255_to_hsv_deg(r, g, b)
+	(hsv, hsv_clipped) = xyz100_to_hsv_deg(X, Y, Z)
+	h, s, v = hsv
 	st.session_state.r = int(r)
 	st.session_state.g = int(g)
 	st.session_state.b = int(b)
@@ -132,7 +138,7 @@ else:  # xyz
 	st.session_state.s = int(round(s))
 	st.session_state.v = int(round(v))
 	st.session_state.hex = rgb_to_hex(r, g, b)
-	clip_warning = bool(clipped)
+	clip_warning = bool(clipped or hsv_clipped)
 
 st.title("Цветовые модели: RGB ↔ XYZ ↔ HSV")
 st.caption("Интерактивная синхронизация трёх моделей. XYZ (D65): X≤95.047, Y≤100, Z≤108.883. HSV — H:0–360°, S/V:0–100%.")
